@@ -1,0 +1,20 @@
+[project]
+name = "multi-model-chatbot"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Jayesh Patil", email = "patiljayeshd2003@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "ollama>=0.6.2",
+    "streamlit>=1.63.0",
+]
+
+[project.scripts]
+multi-model-chatbot = "multi_model_chatbot:main"
+
+[build-system]
+requires = ["uv_build>=0.12.11,<0.13.0"]
+build-backend = "uv_build"
