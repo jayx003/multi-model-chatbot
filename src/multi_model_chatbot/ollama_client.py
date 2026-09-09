@@ -1,15 +1,21 @@
-from ollama import chat
+import httpx
+
+
+API_URL = "http://127.0.0.1:8000"
 
 
 def generate_response(model, messages):
-    response = chat(
-        model=model,
-        messages=messages,
-        stream=True,
+    response = httpx.post(
+        f"{API_URL}/chat",
+        json={
+            "model": model,
+            "messages": messages,
+        },
+        timeout=300.0,
     )
 
-    for chunk in response:
-        content = chunk.message.content
+    response.raise_for_status()
 
-        if content:
-            yield content
+    data = response.json()
+
+    return data["response"]

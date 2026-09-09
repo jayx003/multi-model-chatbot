@@ -1,7 +1,15 @@
-MODELS = {
-    "Llama 3.2": "llama3.2:latest",
-    "Gemma 3": "gemma3:latest",
-    "Qwen 3": "qwen3:latest",
-    "DeepSeek R1": "deepseek-r1:latest",
-    "GPT-OSS": "gpt-oss:latest",
-}
+import httpx
+
+
+API_URL = "http://127.0.0.1:8000"
+
+
+def get_models():
+    response = httpx.get(
+        f"{API_URL}/models",
+        timeout=10.0,
+    )
+
+    response.raise_for_status()
+
+    return response.json()["models"]
