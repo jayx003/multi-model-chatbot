@@ -1,149 +1,225 @@
 # 🤖 Multi-Model Local AI Chatbot
 
-**A private local AI chatbot for running and interacting with multiple open-source LLMs through Ollama.**
+### Chat with multiple open-source LLMs locally using Ollama, FastAPI & Streamlit.
 
-Build, test, and experiment with local AI models through a clean Streamlit interface.  
-The application separates the UI from inference using a FastAPI backend.  
-It avoids sending prompts to third-party AI services during local inference.
+[![Python](https://img.shields.io/badge/Python-3.x-3776AB?logo=python\&logoColor=white)](https://www.python.org/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-App-FF4B4B?logo=streamlit\&logoColor=white)](https://streamlit.io/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688?logo=fastapi\&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Ollama](https://img.shields.io/badge/Ollama-Local%20LLMs-black)](https://ollama.com/)
+[![uv](https://img.shields.io/badge/uv-Package%20Manager-DE5FE9)](https://docs.astral.sh/uv/)
+
+> A local-first Generative AI application that provides a web-based chat interface for interacting with multiple Ollama-hosted open-source Large Language Models (LLMs).
 
 ## 🚀 Live Demo
 
-🌐 **Try the deployed application:**
+**Try the deployed application:**
 
-👉 [**Multi-Model AI Chatbot**](https://multi-model-chatbot-003.streamlit.app/)
+👉 **https://multi-model-chatbot-003.streamlit.app/**
 
-> **Note:** The deployed Streamlit application requires a reachable AI backend.
-> Local Ollama instances are not directly accessible from Streamlit Cloud.
-
-**Repository:** [GitHub Repository](https://github.com/jayx003/multi-model-chatbot)
+> **Note:** The live Streamlit deployment is primarily intended for demonstrating the application interface. Local execution is recommended when using Ollama-hosted models directly on your own machine.
 
 ---
 
-## 🖼️ Project Preview
+## 📸 Application Preview
 
-<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/946802c3-d82f-4923-a436-87a3a4d396d7" />
+<!-- Add your application screenshot here -->
 
-## 🚀 Features
+<img width="1920" height="929" alt="image" src="https://github.com/user-attachments/assets/21484727-7e2a-4246-b84a-54fe0263c42a" />
 
-* 🤖 **Multi-model support**
+## 🎯 Why This Project?
 
-  * Use multiple Ollama models.
-  * Switch models from the UI.
+Modern LLM applications often depend on cloud-based APIs.
 
-* 🔄 **Automatic model detection**
+This project explores a different approach:
 
-  * Detect installed Ollama models.
-  * Refresh the model list from the application.
+**Run open-source LLMs locally through Ollama and expose them through a clean application architecture.**
 
-* 💬 **Interactive chat**
-
-  * Maintain conversation history.
-  * Start new conversations instantly.
-  * Clear conversations when needed.
-
-* ⚡ **AI response generation**
-
-  * Generate responses through Ollama.
-  * Support streaming-style chat interaction.
-
-* 🖥️ **Clean Streamlit interface**
-
-  * Responsive chat interface.
-  * Dedicated model selection.
-  * Backend status indicators.
-
-* 🚀 **FastAPI backend**
-
-  * Separates UI and inference logic.
-  * Provides REST API endpoints.
-  * Includes interactive API documentation.
-
-* 🔒 **Local-first architecture**
-
-  * Run inference on your own machine.
-  * Keep prompts within your local environment.
-
-* 📦 **Modern dependency management**
-
-  * Uses `uv` for Python dependencies.
-  * Uses `uv.lock` for reproducible environments.
-
----
-
-## 🏗️ Architecture
+The application separates the user interface, API layer, and model-inference layer:
 
 ```text
-                         ┌─────────────────────┐
-                         │    User / Browser    │
-                         └──────────┬──────────┘
-                                    │
-                                    │ HTTP
-                                    ▼
-                         ┌─────────────────────┐
-                         │     Streamlit UI    │
-                         │                     │
-                         │  Chat + Model UI    │
-                         └──────────┬──────────┘
-                                    │
-                                    │ HTTP
-                                    ▼
-                         ┌─────────────────────┐
-                         │    FastAPI Backend  │
-                         │                     │
-                         │ /models             │
-                         │ /chat               │
-                         │ /health             │
-                         └──────────┬──────────┘
-                                    │
-                                    │ HTTP
-                                    ▼
-                         ┌─────────────────────┐
-                         │       Ollama        │
-                         │                     │
-                         │ Llama               │
-                         │ Qwen                │
-                         │ Gemma               │
-                         │ Other LLMs           │
-                         └─────────────────────┘
+User
+  │
+  ▼
+┌──────────────────────┐
+│    Streamlit UI      │
+│   Chat Interface     │
+└──────────┬───────────┘
+           │ HTTP
+           ▼
+┌──────────────────────┐
+│    FastAPI Backend   │
+│                      │
+│ • Model Discovery    │
+│ • Chat Requests      │
+│ • API Communication  │
+└──────────┬───────────┘
+           │
+           ▼
+┌──────────────────────┐
+│       Ollama         │
+│   Local LLM Runtime  │
+└──────────┬───────────┘
+           │
+      ┌────┼────┬─────┐
+      ▼    ▼    ▼     ▼
+    Llama Qwen Gemma  Other
 ```
 
-### Request Flow
+This architecture keeps the frontend and model-inference logic separated while allowing different locally available models to be accessed through the same application.
+
+---
+
+# ✨ Features
+
+### 🤖 Multi-Model Support
+
+Interact with multiple models available through Ollama.
+
+Examples include:
+
+* Llama
+* Qwen
+* Gemma
+* Other Ollama-compatible models
+
+The application does not require models to be hard-coded into the UI.
+
+---
+
+### 🔍 Automatic Model Discovery
+
+The backend communicates with Ollama to discover models installed on the local machine.
+
+For example:
+
+```bash
+ollama list
+```
+
+The available models can then be exposed to the chatbot through the FastAPI backend.
+
+---
+
+### 💬 Session-Based Chat
+
+Maintain conversation history within a chat session, allowing the application to behave like a conventional conversational AI assistant.
+
+---
+
+### ⚡ Streaming Responses
+
+AI responses can be streamed progressively rather than waiting for the entire response to be generated.
+
+Conceptually:
 
 ```text
 User Prompt
-     ↓
+     │
+     ▼
 Streamlit
-     ↓
-FastAPI /chat
-     ↓
-Ollama
-     ↓
-Selected Local LLM
-     ↓
+     │
+     ▼
 FastAPI
-     ↓
-Streamlit
-     ↓
-AI Response
+     │
+     ▼
+Ollama
+     │
+     ▼
+Generated Response
+     │
+     ├── Chunk 1
+     ├── Chunk 2
+     ├── Chunk 3
+     ├── ...
+     ▼
+Streamlit UI
 ```
 
----
-
-## 🛠️ Tech Stack
-
-| Technology    | Purpose                      |
-| ------------- | ---------------------------- |
-| **Python**    | Core programming language    |
-| **Streamlit** | Web-based chat interface     |
-| **FastAPI**   | Backend REST API             |
-| **Ollama**    | Local LLM inference          |
-| **HTTPX**     | HTTP communication           |
-| **Pydantic**  | API request validation       |
-| **uv**        | Python dependency management |
+This provides a more responsive chat experience.
 
 ---
 
-## 📁 Project Structure
+### 🔒 Local-First AI
+
+When using locally hosted Ollama models, inference can run on the user's own machine without requiring prompts to be sent to a third-party cloud LLM API.
+
+This makes the project useful for experimenting with local and privacy-conscious GenAI workflows.
+
+---
+
+### 🖥️ Streamlit Interface
+
+A lightweight web interface provides:
+
+* Model selection
+* Chat interaction
+* Conversation history
+* Streaming responses
+* Easy experimentation with different local models
+
+---
+
+### 🚀 FastAPI Backend
+
+FastAPI acts as the application/service layer between the Streamlit frontend and Ollama.
+
+Responsibilities include:
+
+* API request handling
+* Model discovery
+* Communication with Ollama
+* Chat request processing
+* Streaming responses
+
+---
+
+# 🏗️ Architecture
+
+The application follows a simple three-layer architecture:
+
+```text
+┌─────────────────────────────────────────┐
+│              Presentation               │
+│                                         │
+│              Streamlit UI               │
+└────────────────────┬────────────────────┘
+                     │
+                     │ HTTP
+                     ▼
+┌─────────────────────────────────────────┐
+│              API Layer                  │
+│                                         │
+│              FastAPI                    │
+│                                         │
+│   Model Discovery │ Chat │ Streaming    │
+└────────────────────┬────────────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────┐
+│           LLM / Inference Layer         │
+│                                         │
+│                Ollama                   │
+│                                         │
+│  Llama │ Qwen │ Gemma │ Other Models    │
+└─────────────────────────────────────────┘
+```
+
+### Why FastAPI?
+
+FastAPI provides a dedicated backend layer instead of coupling the Streamlit interface directly to the Ollama client.
+
+This separation makes it easier to:
+
+* Keep UI and backend logic independent
+* Expose reusable API endpoints
+* Handle model discovery
+* Implement streaming
+* Extend the application in the future
+* Replace or expand the frontend without rewriting the inference layer
+
+---
+
+# 📁 Project Structure
 
 ```text
 multi-model-chatbot/
@@ -170,39 +246,61 @@ multi-model-chatbot/
 
 ### Key Components
 
-| File                       | Responsibility          |
-| -------------------------- | ----------------------- |
-| `backend/main.py`          | FastAPI application     |
-| `src/.../main.py`          | Streamlit application   |
-| `src/.../models.py`        | Backend model discovery |
-| `src/.../ollama_client.py` | Backend communication   |
-| `pyproject.toml`           | Project configuration   |
-| `uv.lock`                  | Locked dependencies     |
+| Component                                  | Responsibility                         |
+| ------------------------------------------ | -------------------------------------- |
+| `src/multi_model_chatbot/main.py`          | Streamlit application                  |
+| `src/multi_model_chatbot/models.py`        | Application/model-related definitions  |
+| `src/multi_model_chatbot/ollama_client.py` | Ollama communication                   |
+| `backend/main.py`                          | FastAPI application and API layer      |
+| `pyproject.toml`                           | Project configuration and dependencies |
+| `uv.lock`                                  | Reproducible dependency locking        |
 
 ---
 
-## 📦 Prerequisites & Installation
+# 🛠️ Tech Stack
 
-### Prerequisites
-
-| Requirement | Recommended              |
-| ----------- | ------------------------ |
-| **Python**  | 3.11+                    |
-| **Git**     | Latest stable version    |
-| **uv**      | Latest stable version    |
-| **Ollama**  | Latest stable version    |
-| **RAM**     | Depends on selected LLM  |
-| **OS**      | Windows, macOS, or Linux |
+| Technology    | Purpose                                      |
+| ------------- | -------------------------------------------- |
+| **Python**    | Core programming language                    |
+| **Streamlit** | Web-based chatbot interface                  |
+| **FastAPI**   | Backend/API layer                            |
+| **Ollama**    | Local LLM runtime                            |
+| **HTTPX**     | HTTP communication                           |
+| **uv**        | Python dependency and environment management |
 
 ---
 
-### 1. Clone the Repository
+# ⚙️ Prerequisites
+
+Before running the project locally, install:
+
+1. **Python**
+2. **Ollama**
+3. **uv**
+
+You can verify the installations:
+
+```bash
+python --version
+```
+
+```bash
+ollama --version
+```
+
+```bash
+uv --version
+```
+
+---
+
+# 📥 Installation
+
+## 1. Clone the repository
 
 ```bash
 git clone https://github.com/jayx003/multi-model-chatbot.git
 ```
-
-Enter the project directory:
 
 ```bash
 cd multi-model-chatbot
@@ -210,7 +308,7 @@ cd multi-model-chatbot
 
 ---
 
-### 2. Install Dependencies
+## 2. Install dependencies
 
 Using `uv`:
 
@@ -218,27 +316,15 @@ Using `uv`:
 uv sync
 ```
 
-This creates or updates the project's Python environment.
+This creates/uses the project environment and installs the dependencies defined by the project.
 
 ---
 
-### 3. Verify Ollama
+# 🧠 Set Up Ollama
 
-Check your Ollama installation:
+Make sure Ollama is installed and running.
 
-```bash
-ollama --version
-```
-
-Check installed models:
-
-```bash
-ollama list
-```
-
----
-
-### 4. Install an Ollama Model
+Then pull at least one model.
 
 For example:
 
@@ -246,7 +332,7 @@ For example:
 ollama pull llama3.2
 ```
 
-You can install additional models:
+You can also install additional models:
 
 ```bash
 ollama pull qwen3
@@ -256,33 +342,50 @@ ollama pull qwen3
 ollama pull gemma3
 ```
 
-Verify them:
+Check the installed models:
 
 ```bash
 ollama list
 ```
 
+Example:
+
+```text
+NAME              SIZE
+llama3.2:latest   ...
+qwen3:latest      ...
+gemma3:latest     ...
+```
+
+The application can detect the models available through Ollama.
+
 ---
 
-## 💻 Usage
+# ▶️ Running the Application
 
-The application uses two processes.
+The application consists of two services:
 
-Run the FastAPI backend first.
+```text
+FastAPI Backend
+      +
+Streamlit Frontend
+```
 
-### Terminal 1 — FastAPI
+Both should be running locally.
+
+## Terminal 1 — Start FastAPI
 
 ```bash
 uv run uvicorn backend.main:app --reload
 ```
 
-The backend runs at:
+The backend will be available at:
 
 ```text
 http://127.0.0.1:8000
 ```
 
-FastAPI documentation:
+FastAPI interactive API documentation:
 
 ```text
 http://127.0.0.1:8000/docs
@@ -290,312 +393,253 @@ http://127.0.0.1:8000/docs
 
 ---
 
-### Terminal 2 — Streamlit
-
-Open another terminal.
-
-Run:
+## Terminal 2 — Start Streamlit
 
 ```bash
 uv run streamlit run src/multi_model_chatbot/main.py
 ```
 
-Open the application:
+The application will normally be available at:
 
 ```text
 http://localhost:8501
 ```
 
----
-
-## 🔌 API Endpoints
-
-| Method | Endpoint  | Purpose                       |
-| ------ | --------- | ----------------------------- |
-| `GET`  | `/`       | Backend status                |
-| `GET`  | `/health` | Health check                  |
-| `GET`  | `/models` | List Ollama models            |
-| `POST` | `/chat`   | Generate an AI response       |
-| `GET`  | `/docs`   | Interactive API documentation |
-
-### Health Check
-
-```bash
-curl http://127.0.0.1:8000/health
-```
-
-Expected response:
-
-```json
-{
-  "status": "healthy"
-}
-```
+Open the URL in your browser and start chatting with your locally available models.
 
 ---
 
-### Get Installed Models
+# 🔄 Application Workflow
 
-```bash
-curl http://127.0.0.1:8000/models
-```
-
-The endpoint returns models available through Ollama.
-
----
-
-### Chat API Example
-
-Send a request to the backend:
-
-```bash
-curl -X POST "http://127.0.0.1:8000/chat" ^
-  -H "Content-Type: application/json" ^
-  -d "{\"model\":\"llama3.2:latest\",\"messages\":[{\"role\":\"user\",\"content\":\"Explain Python in one sentence.\"}]}"
-```
-
-Example request body:
-
-```json
-{
-  "model": "llama3.2:latest",
-  "messages": [
-    {
-      "role": "user",
-      "content": "Explain Python in one sentence."
-    }
-  ]
-}
-```
-
----
-
-## 🔐 Privacy & Security
-
-This project follows a local-first architecture.
-
-Your prompts are processed by Ollama on the local machine.
-
-No external AI provider is required for local inference.
-
-### Never Commit Secrets
-
-Do not commit API keys or credentials.
-
-Use environment variables or local secret files when required.
-
-Example:
+A typical request follows this flow:
 
 ```text
-OLLAMA_API_KEY=your_secret_key
+1. User selects an Ollama model
+              │
+              ▼
+2. User enters a prompt
+              │
+              ▼
+3. Streamlit sends request
+              │
+              ▼
+4. FastAPI receives request
+              │
+              ▼
+5. FastAPI communicates with Ollama
+              │
+              ▼
+6. Ollama generates response
+              │
+              ▼
+7. Response is streamed back
+              │
+              ▼
+8. Streamlit displays response
 ```
 
-Add secret files to `.gitignore`:
+---
+
+# 🔐 Privacy & Local Inference
+
+This project is designed around a **local-first LLM architecture**.
+
+When Ollama is running locally:
 
 ```text
-.env
-.env.*
-.streamlit/secrets.toml
+Your Prompt
+    │
+    ▼
+Local FastAPI
+    │
+    ▼
+Local Ollama
+    │
+    ▼
+Local LLM
 ```
 
-> **Security note:** Never publish real API keys in GitHub repositories.
+No external LLM API is inherently required for the inference process.
+
+However, privacy depends on the complete environment in which the application is deployed and operated.
 
 ---
 
-## 🔄 Updating the Project
+# 🧪 Example Models
 
-If the repository is already cloned:
+The application can work with any compatible model available through Ollama.
 
-```bash
-git pull
-```
-
-Then synchronize dependencies:
-
-```bash
-uv sync
-```
-
-Start the application again:
-
-```bash
-uv run uvicorn backend.main:app --reload
-```
-
-In another terminal:
-
-```bash
-uv run streamlit run src/multi_model_chatbot/main.py
-```
-
----
-
-## 🧠 Adding More Models
-
-Ollama supports many open-source models.
-
-Install a model:
-
-```bash
-ollama pull <model-name>
-```
-
-Example:
+Some examples:
 
 ```bash
 ollama pull llama3.2
+ollama pull qwen3
+ollama pull gemma3
 ```
 
-Check installed models:
+Then:
 
 ```bash
 ollama list
 ```
 
-The application retrieves available models from the FastAPI backend.
+The application can use the models exposed by the local Ollama runtime.
+
+> Model availability and hardware requirements vary depending on the model.
 
 ---
 
-## 🧪 Development Workflow
+# 💡 Use Cases
 
-Recommended development flow:
+This project can be used for:
 
-```text
-1. Start Ollama
-       ↓
-2. Start FastAPI
-       ↓
-3. Start Streamlit
-       ↓
-4. Test the application
-       ↓
-5. Modify code
-       ↓
-6. Test again
-       ↓
-7. Commit changes
-       ↓
-8. Push to GitHub
-```
-
-Git workflow:
-
-```bash
-git status
-```
-
-```bash
-git add .
-```
-
-```bash
-git commit -m "Update chatbot"
-```
-
-```bash
-git push
-```
+* 🧪 Experimenting with different open-source LLMs
+* 🤖 Building local AI assistants
+* 🔍 Comparing model behavior
+* 📚 Learning LLM application development
+* 🏠 Running AI workloads locally
+* 🔐 Exploring privacy-conscious GenAI architectures
+* ⚙️ Learning frontend/backend separation in AI applications
 
 ---
 
-## 🚀 Future Improvements
+# 🚧 Future Improvements
 
-Potential enhancements include:
+Planned or potential improvements include:
 
-* [ ] True token-by-token streaming
-* [ ] Model performance comparison
-* [ ] Conversation persistence
-* [ ] Chat export
+* [ ] Side-by-side model comparison
+* [ ] Model performance benchmarking
+* [ ] Token/response latency metrics
+* [ ] Persistent conversation storage
+* [ ] Conversation export
+* [ ] Custom system prompts
+* [ ] Temperature and generation controls
 * [ ] Authentication
-* [ ] Model-specific settings
-* [ ] Temperature controls
-* [ ] System prompt configuration
-* [ ] File upload support
-* [ ] RAG integration
 * [ ] Docker deployment
-* [ ] Cloud-hosted inference
-* [ ] Multi-user support
 * [ ] Automated testing
-* [ ] CI/CD pipeline
+* [ ] GitHub Actions CI/CD
+* [ ] Improved error handling
+* [ ] Model metadata and capability display
+* [ ] RAG support
+* [ ] Document upload and question answering
+* [ ] Multi-user support
 
 ---
 
-## 🤝 Contributing
+# 🧪 Development
 
-Contributions are welcome.
-
-### 1. Fork the Repository
-
-Create your own GitHub fork.
-
-### 2. Clone Your Fork
-
-```bash
-git clone https://github.com/<your-username>/multi-model-chatbot.git
-```
-
-### 3. Create a Feature Branch
-
-```bash
-git checkout -b feature/your-feature
-```
-
-### 4. Make Your Changes
-
-Keep changes focused and well documented.
-
-### 5. Test Locally
-
-Run:
+Install the project in development mode using:
 
 ```bash
 uv sync
 ```
 
-Then start both services:
+Run the backend:
 
 ```bash
 uv run uvicorn backend.main:app --reload
 ```
 
+Run the frontend:
+
 ```bash
 uv run streamlit run src/multi_model_chatbot/main.py
 ```
 
-### 6. Commit Your Changes
+---
+
+# 🤝 Contributing
+
+Contributions, suggestions, and improvements are welcome.
+
+### Basic workflow
+
+```bash
+git clone https://github.com/jayx003/multi-model-chatbot.git
+```
+
+Create a feature branch:
+
+```bash
+git checkout -b feature/your-feature
+```
+
+Make your changes and commit:
 
 ```bash
 git add .
-git commit -m "Add your feature"
+git commit -m "feat: add your feature"
 ```
 
-### 7. Push Your Branch
+Push the branch:
 
 ```bash
 git push origin feature/your-feature
 ```
 
-### 8. Open a Pull Request
-
-Describe your changes clearly.
-
-Include testing details when relevant.
-
-### Reporting Issues
-
-Before opening an issue:
-
-* Check existing issues.
-* Reproduce the problem.
-* Include relevant error messages.
-* Mention your operating system.
-* Mention your Python version.
-* Mention your Ollama version.
-* Avoid posting API keys or secrets.
+Then open a Pull Request.
 
 ---
-## ⭐ Project
 
-If this project helps you learn local GenAI development, consider starring the repository.
+# 📄 License
 
-**Built with Python, Streamlit, FastAPI, Ollama, and `uv`.**
+This project is intended for educational, experimental, and portfolio purposes.
+
+Add an explicit open-source license such as **MIT** if you want others to legally reuse and modify the code.
+
+---
+
+# 👨‍💻 Author
+
+**Jayesh Patil**
+
+AI/ML • Generative AI • Python • LLM Applications
+
+GitHub:
+https://github.com/jayx003
+
+Project:
+https://github.com/jayx003/multi-model-chatbot
+
+Live Demo:
+https://multi-model-chatbot-003.streamlit.app/
+
+---
+
+# ⭐ Support
+
+If you find this project useful or interesting:
+
+⭐ **Star the repository**
+
+🍴 **Fork it**
+
+🐛 **Open an issue**
+
+💡 **Suggest an improvement**
+
+---
+
+## 📌 Project Summary
+
+**Multi-Model Local AI Chatbot** demonstrates how a modern Generative AI application can be built around locally hosted open-source LLMs.
+
+The project combines:
+
+```text
+Streamlit
+    +
+FastAPI
+    +
+Ollama
+    +
+Open-Source LLMs
+    +
+Python
+```
+
+to create a modular, local-first conversational AI application.
+
+---
+
+### Built with Python 🐍 • FastAPI ⚡ • Streamlit 🎈 • Ollama 🦙
