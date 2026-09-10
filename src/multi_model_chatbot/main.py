@@ -1,6 +1,9 @@
 import streamlit as st
 
-from multi_model_chatbot.models import get_models
+from multi_model_chatbot.models import (
+    check_local_ollama,
+    get_models,
+)
 from multi_model_chatbot.ollama_client import generate_response
 
 
@@ -9,10 +12,9 @@ from multi_model_chatbot.ollama_client import generate_response
 # ============================================================
 
 st.set_page_config(
-    page_title="Local AI Chat",
+    page_title="Multi-Model AI Chat",
     page_icon="🤖",
     layout="wide",
-    initial_sidebar_state="expanded",
 )
 
 
@@ -24,60 +26,58 @@ st.markdown(
     """
     <style>
 
-    /* Main application */
-    .stApp {
-        background-color: #0b0f14;
+    .main {
+        background-color: #0e1117;
     }
 
-    /* Main content width */
     .block-container {
         max-width: 1100px;
         padding-top: 2rem;
-        padding-bottom: 6rem;
     }
 
-    /* Sidebar */
-    section[data-testid="stSidebar"] {
-        background-color: #11161d;
-        border-right: 1px solid #252c36;
+    .app-title {
+        font-size: 2.2rem;
+        font-weight: 700;
+        margin-bottom: 0.2rem;
     }
 
-    /* Sidebar buttons */
-    section[data-testid="stSidebar"] .stButton > button {
-        width: 100%;
+    .app-subtitle {
+        color: #9ca3af;
+        font-size: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .status-card {
+        padding: 12px;
         border-radius: 10px;
-        min-height: 42px;
-        background-color: #171d25;
-        border: 1px solid #303845;
-        color: #e7ebf0;
+        background-color: #161b22;
+        border: 1px solid #30363d;
+        margin-bottom: 10px;
     }
 
-    section[data-testid="stSidebar"] .stButton > button:hover {
-        border-color: #6d5dfc;
-        color: white;
+    .online-status {
+        color: #3fb950;
+        font-weight: 600;
     }
 
-    /* Select box */
-    div[data-baseweb="select"] > div {
-        background-color: #171d25;
-        border-color: #303845;
-        border-radius: 10px;
+    .offline-status {
+        color: #f85149;
+        font-weight: 600;
     }
 
-    /* Chat input */
-    [data-testid="stChatInput"] {
-        border-radius: 14px;
+    .neutral-status {
+        color: #9ca3af;
+        font-weight: 600;
     }
 
-    /* Chat messages */
-    [data-testid="stChatMessage"] {
-        padding-top: 12px;
-        padding-bottom: 12px;
-    }
-
-    /* Dividers */
-    hr {
-        border-color: #252c36;
+    .model-info {
+        padding: 10px 12px;
+        border-radius: 8px;
+        background-color: #161b22;
+        border: 1px solid #30363d;
+        margin-top: 8px;
+        color: #9ca3af;
+        font-size: 0.85rem;
     }
 
     </style>
@@ -94,55 +94,15 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 
 
-# ============================================================
-# LOAD MODELS FROM FASTAPI
-# ============================================================
-
-try:
-    available_models = get_models()
-
-except Exception as e:
-
-    st.error(
-        "❌ Could not connect to the FastAPI backend."
-    )
-
-    st.code(str(e))
-
-    st.info(
-        "Make sure FastAPI is running on "
-        "http://127.0.0.1:8000"
-    )
-
-    st.stop()
+if "selected_model" not in st.session_state:
+    st.session_state.selected_model = None
 
 
 # ============================================================
-# CHECK MODELS
+# CHECK LOCAL OLLAMA STATUS
 # ============================================================
 
-if not available_models:
-
-    st.warning(
-        "⚠️ No Ollama models are installed."
-    )
-
-    st.info(
-        "Install a model using the Ollama terminal, "
-        "then click Refresh Models."
-    )
-
-    st.stop()
-
-
-# ============================================================
-# CREATE MODEL OPTIONS
-# ============================================================
-
-model_options = {
-    model["display_name"]: model["name"]
-    for model in available_models
-}
+local_ollama_online = check_local_ollama()
 
 
 # ============================================================
@@ -151,239 +111,385 @@ model_options = {
 
 with st.sidebar:
 
-    st.title("🤖 Local AI")
-
-    st.caption("Private multi-model assistant")
-
-    st.divider()
+    st.title("⚙️ Settings")
 
     # --------------------------------------------------------
     # New Chat
     # --------------------------------------------------------
 
     if st.button(
-        "＋  New Chat",
+        "🆕 New Chat",
         use_container_width=True,
     ):
-
         st.session_state.messages = []
-
         st.rerun()
 
     st.divider()
 
     # --------------------------------------------------------
-    # Model Selection
+    # LOCAL OLLAMA STATUS
     # --------------------------------------------------------
 
-    st.caption("MODEL")
+    st.subheader("💻 Local Ollama")
 
-    model_name = st.selectbox(
-        "Choose model",
-        options=list(model_options.keys()),
+    if local_ollama_online:
+
+        st.markdown(
+            """
+            <div class="status-card">
+                <span class="online-status">
+                    🟢 ONLINE
+                </span>
+                <br>
+                Your local Ollama is running.
+                <br>
+                <small>
+                    Local models are available.
+                </small>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    else:
+
+        st.markdown(
+            """
+            <div class="status-card">
+                <span class="offline-status">
+                    🔴 OFFLINE
+                </span>
+                <br>
+                Ollama is not reachable on this PC.
+                <br>
+                <small>
+                    Start Ollama to use local models.
+                </small>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    st.divider()
+
+    # --------------------------------------------------------
+    # AI PROVIDER
+    # --------------------------------------------------------
+
+    st.subheader("AI Provider")
+
+    provider_options = [
+        "☁️ Ollama Cloud",
+    ]
+
+    # Only make Local Ollama selectable when it is online.
+    if local_ollama_online:
+        provider_options.append(
+            "💻 Local Ollama"
+        )
+
+    provider_label = st.radio(
+        "Choose provider",
+        provider_options,
         label_visibility="collapsed",
     )
 
-    selected_model = model_options[model_name]
+    if provider_label == "☁️ Ollama Cloud":
+        mode = "cloud"
+    else:
+        mode = "local"
+
+    st.divider()
 
     # --------------------------------------------------------
-    # Refresh Models
+    # LOAD MODELS
     # --------------------------------------------------------
+
+    try:
+
+        models = get_models(
+            mode=mode
+        )
+
+    except Exception as e:
+
+        models = []
+
+        if mode == "local":
+
+            st.error(
+                "Unable to load local models."
+            )
+
+        else:
+
+            st.error(
+                str(e)
+            )
+
+    # --------------------------------------------------------
+    # MODEL SELECTOR
+    # --------------------------------------------------------
+
+    if models:
+
+        model_names = [
+            model["name"]
+            for model in models
+        ]
+
+        # Make sure selected model exists
+        # in the currently selected provider.
+
+        if (
+            st.session_state.selected_model
+            not in model_names
+        ):
+            st.session_state.selected_model = (
+                model_names[0]
+            )
+
+        selected_model = st.selectbox(
+            "Model",
+            model_names,
+            index=model_names.index(
+                st.session_state.selected_model
+            ),
+        )
+
+        st.session_state.selected_model = (
+            selected_model
+        )
+
+        # ----------------------------------------------------
+        # MODEL INFORMATION
+        # ----------------------------------------------------
+
+        selected_info = next(
+            (
+                model
+                for model in models
+                if model["name"] == selected_model
+            ),
+            None,
+        )
+
+        if selected_info:
+
+            description = selected_info.get(
+                "description"
+            )
+
+            if description:
+
+                st.markdown(
+                    f"""
+                    <div class="model-info">
+                        <b>
+                            {selected_info.get(
+                                "display_name",
+                                selected_model
+                            )}
+                        </b>
+                        <br>
+                        {description}
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+    else:
+
+        selected_model = None
+
+        if mode == "local":
+
+            st.warning(
+                "No local models available."
+            )
+
+        else:
+
+            st.warning(
+                "No cloud models available."
+            )
+
+    # --------------------------------------------------------
+    # REFRESH
+    # --------------------------------------------------------
+
+    st.write("")
 
     if st.button(
         "🔄 Refresh Models",
         use_container_width=True,
     ):
-
         st.rerun()
 
     st.divider()
 
     # --------------------------------------------------------
-    # Active Model
+    # CURRENT PROVIDER STATUS
     # --------------------------------------------------------
 
-    st.caption("ACTIVE MODEL")
+    st.subheader("Status")
 
-    st.info(
-        f"🧠 **{model_name}**\n\n"
-        f"`{selected_model}`"
+    if mode == "cloud":
+
+        st.markdown(
+            """
+            <div class="status-card">
+                ☁️ <b>Provider</b><br>
+                Ollama Cloud
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        st.markdown(
+            """
+            <div class="status-card">
+                ⚡ <b>Inference</b><br>
+                Cloud
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        st.markdown(
+            """
+            <div class="status-card">
+                <span class="online-status">
+                    🟢 CLOUD AVAILABLE
+                </span>
+                <br>
+                Your PC can be OFF.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    else:
+
+        st.markdown(
+            """
+            <div class="status-card">
+                💻 <b>Provider</b><br>
+                FastAPI + Local Ollama
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        st.markdown(
+            """
+            <div class="status-card">
+                ⚡ <b>Inference</b><br>
+                Local
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        st.markdown(
+            """
+            <div class="status-card">
+                <span class="online-status">
+                    🟢 LOCAL ONLINE
+                </span>
+                <br>
+                Running on this PC.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    # --------------------------------------------------------
+    # MODEL COUNT
+    # --------------------------------------------------------
+
+    st.write(
+        f"**Models available:** {len(models)}"
     )
-
-    # --------------------------------------------------------
-    # Number of Models
-    # --------------------------------------------------------
-
-    st.caption("AVAILABLE MODELS")
-
-    st.metric(
-        label="Installed",
-        value=len(available_models),
-    )
-
-    # --------------------------------------------------------
-    # Backend
-    # --------------------------------------------------------
-
-    st.caption("BACKEND")
-
-    st.success("🟢 FastAPI + Ollama")
-
-    # --------------------------------------------------------
-    # Inference
-    # --------------------------------------------------------
-
-    st.caption("INFERENCE")
-
-    st.info("🔒 Running locally")
 
     st.divider()
 
     # --------------------------------------------------------
-    # Clear Conversation
+    # CLEAR CHAT
     # --------------------------------------------------------
 
     if st.button(
         "🗑️ Clear Conversation",
         use_container_width=True,
     ):
-
         st.session_state.messages = []
-
         st.rerun()
-
-    st.divider()
-
-    st.caption(
-        "Powered by Ollama + FastAPI + Streamlit"
-    )
 
 
 # ============================================================
 # MAIN HEADER
 # ============================================================
 
-st.title("🤖 Local AI Chat")
-
-st.caption(
-    "Private • Local • Multi-Model"
+st.markdown(
+    '<div class="app-title">'
+    '🤖 Multi-Model AI Chat'
+    '</div>',
+    unsafe_allow_html=True,
 )
 
-st.write(
-    f"🟢 **{model_name}**  ·  Ollama"
+st.markdown(
+    '<div class="app-subtitle">'
+    'Local + Cloud • Multi-Model AI'
+    '</div>',
+    unsafe_allow_html=True,
 )
-
-st.divider()
 
 
 # ============================================================
-# WELCOME SCREEN
+# LOCAL OFFLINE NOTICE
+# ============================================================
+
+if not local_ollama_online:
+
+    st.info(
+        "💻 Local Ollama is currently offline. "
+        "Start Ollama on this PC to use local models. "
+        "☁️ Ollama Cloud remains available."
+    )
+
+
+# ============================================================
+# EMPTY STATE
 # ============================================================
 
 if not st.session_state.messages:
 
+    st.info(
+        "👋 Welcome! Select a model from the sidebar "
+        "and start chatting."
+    )
+
     st.markdown(
-        "## ✨ What can I help you with?"
+        """
+        ### 💡 Try asking
+
+        - Explain machine learning in simple language
+        - Write a Python program for a calculator
+        - Explain how APIs work
+        - Give me project ideas for GenAI
+        """
     )
-
-    st.write(
-        "Ask questions, write code, learn new topics, "
-        "debug problems, or explore ideas with your "
-        "local AI models."
-    )
-
-    st.write("")
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-
-        if st.button(
-            "💡 Explain something",
-            use_container_width=True,
-        ):
-
-            st.session_state.messages.append(
-                {
-                    "role": "user",
-                    "content": (
-                        "Explain artificial intelligence "
-                        "in simple words."
-                    ),
-                }
-            )
-
-            st.rerun()
-
-        if st.button(
-            "🐍 Help me with Python",
-            use_container_width=True,
-        ):
-
-            st.session_state.messages.append(
-                {
-                    "role": "user",
-                    "content": (
-                        "Teach me an interesting "
-                        "Python concept."
-                    ),
-                }
-            )
-
-            st.rerun()
-
-    with col2:
-
-        if st.button(
-            "💻 Write some code",
-            use_container_width=True,
-        ):
-
-            st.session_state.messages.append(
-                {
-                    "role": "user",
-                    "content": (
-                        "Show me a useful Python "
-                        "project idea."
-                    ),
-                }
-            )
-
-            st.rerun()
-
-        if st.button(
-            "🧠 Ask a question",
-            use_container_width=True,
-        ):
-
-            st.session_state.messages.append(
-                {
-                    "role": "user",
-                    "content": (
-                        "What are some interesting "
-                        "things you can help me with?"
-                    ),
-                }
-            )
-
-            st.rerun()
 
 
 # ============================================================
-# DISPLAY CHAT HISTORY
+# CHAT HISTORY
 # ============================================================
 
 for message in st.session_state.messages:
 
-    if message["role"] == "user":
-        avatar = "👤"
-    else:
-        avatar = "🤖"
+    role = message["role"]
 
-    with st.chat_message(
-        message["role"],
-        avatar=avatar,
-    ):
+    with st.chat_message(role):
 
         st.markdown(
             message["content"]
@@ -395,28 +501,28 @@ for message in st.session_state.messages:
 # ============================================================
 
 prompt = st.chat_input(
-    "Message your AI assistant..."
+    "Ask anything..."
 )
 
 
 # ============================================================
-# HANDLE USER MESSAGE
+# PROCESS USER MESSAGE
 # ============================================================
 
 if prompt:
 
+    if not selected_model:
+
+        st.error(
+            "Please select an available model first."
+        )
+
+        st.stop()
+
     # --------------------------------------------------------
-    # Display User Message
+    # Add user message
     # --------------------------------------------------------
 
-    with st.chat_message(
-        "user",
-        avatar="👤",
-    ):
-
-        st.markdown(prompt)
-
-    # Save user message
     st.session_state.messages.append(
         {
             "role": "user",
@@ -424,48 +530,41 @@ if prompt:
         }
     )
 
+    with st.chat_message("user"):
+
+        st.markdown(prompt)
+
     # --------------------------------------------------------
-    # Generate AI Response
+    # Generate response
     # --------------------------------------------------------
 
-    with st.chat_message(
-        "assistant",
-        avatar="🤖",
-    ):
+    with st.chat_message("assistant"):
 
-        try:
+        with st.spinner(
+            f"Thinking with {selected_model}..."
+        ):
 
-            with st.spinner(
-                f"{model_name} is thinking..."
-            ):
+            try:
 
-                response = generate_response(
-                    selected_model,
-                    st.session_state.messages,
+                answer = generate_response(
+                    model=selected_model,
+                    messages=st.session_state.messages,
+                    mode=mode,
                 )
 
-            st.markdown(response)
+                st.markdown(answer)
 
-        except Exception as e:
+                # Save assistant response
 
-            response = (
-                "❌ **Could not generate a response.**"
-            )
+                st.session_state.messages.append(
+                    {
+                        "role": "assistant",
+                        "content": answer,
+                    }
+                )
 
-            st.error(response)
+            except Exception as e:
 
-            st.code(
-                str(e),
-                language="text",
-            )
-
-    # --------------------------------------------------------
-    # Save Assistant Response
-    # --------------------------------------------------------
-
-    st.session_state.messages.append(
-        {
-            "role": "assistant",
-            "content": response,
-        }
-    )
+                st.error(
+                    f"⚠️ {str(e)}"
+                )
