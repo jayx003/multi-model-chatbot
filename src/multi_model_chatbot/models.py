@@ -53,11 +53,30 @@ FREE_CLOUD_MODELS = [
 
 
 # ============================================================
+# DETECT STREAMLIT CLOUD
+# ============================================================
+
+def is_streamlit_cloud():
+    """
+    Detect whether the app is running on Streamlit Cloud.
+
+    Returns:
+        True  -> Running on Streamlit Cloud
+        False -> Running locally
+    """
+
+    return os.getenv("STREAMLIT_SHARING_MODE") == "streamlit"
+
+
+# ============================================================
 # CLOUD API KEY
 # ============================================================
 
 def get_cloud_api_key():
-    """Get Ollama Cloud API key."""
+    """
+    Get Ollama Cloud API key from Streamlit secrets
+    or environment variables.
+    """
 
     try:
         return st.secrets["OLLAMA_API_KEY"]
@@ -71,12 +90,19 @@ def get_cloud_api_key():
 
 def check_local_ollama():
     """
-    Check whether Ollama is running on this PC.
+    Check whether Ollama is running on the same machine
+    as the Streamlit application.
 
     Returns:
         True  -> Ollama is online
         False -> Ollama is offline
+        None  -> Streamlit Cloud
     """
+
+    # A Streamlit Cloud server cannot access Ollama
+    # installed on the user's personal laptop.
+    if is_streamlit_cloud():
+        return None
 
     try:
         response = httpx.get(
@@ -95,7 +121,9 @@ def check_local_ollama():
 # ============================================================
 
 def get_local_models():
-    """Get locally installed Ollama models."""
+    """
+    Get locally installed Ollama models through FastAPI.
+    """
 
     response = httpx.get(
         f"{LOCAL_API_URL}/models",
@@ -113,17 +141,11 @@ def get_local_models():
 
 def get_models(mode="local"):
     """
-    Get models for the selected provider.
-
-    Local:
-        FastAPI -> Local Ollama
-
-    Cloud:
-        Curated Free Ollama Cloud models
+    Get models for Local Ollama or Ollama Cloud.
     """
 
     # ========================================================
-    # CLOUD
+    # CLOUD MODE
     # ========================================================
 
     if mode == "cloud":
@@ -146,7 +168,7 @@ def get_models(mode="local"):
         ]
 
     # ========================================================
-    # LOCAL
+    # LOCAL MODE
     # ========================================================
 
     return get_local_models()

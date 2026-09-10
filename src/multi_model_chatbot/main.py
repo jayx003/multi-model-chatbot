@@ -3,6 +3,7 @@ import streamlit as st
 from multi_model_chatbot.models import (
     check_local_ollama,
     get_models,
+    is_streamlit_cloud,
 )
 from multi_model_chatbot.ollama_client import generate_response
 
@@ -56,17 +57,14 @@ st.markdown(
     }
 
     .online-status {
-        color: #3fb950;
         font-weight: 600;
     }
 
     .offline-status {
-        color: #f85149;
         font-weight: 600;
     }
 
     .neutral-status {
-        color: #9ca3af;
         font-weight: 600;
     }
 
@@ -99,7 +97,14 @@ if "selected_model" not in st.session_state:
 
 
 # ============================================================
-# CHECK LOCAL OLLAMA STATUS
+# ENVIRONMENT
+# ============================================================
+
+running_on_cloud = is_streamlit_cloud()
+
+
+# ============================================================
+# CHECK LOCAL OLLAMA
 # ============================================================
 
 local_ollama_online = check_local_ollama()
@@ -126,13 +131,42 @@ with st.sidebar:
 
     st.divider()
 
-    # --------------------------------------------------------
+    # ========================================================
     # LOCAL OLLAMA STATUS
-    # --------------------------------------------------------
+    # ========================================================
 
     st.subheader("💻 Local Ollama")
 
-    if local_ollama_online:
+    # --------------------------------------------------------
+    # STREAMLIT CLOUD
+    # --------------------------------------------------------
+
+    if running_on_cloud:
+
+        st.markdown(
+            """
+            <div class="status-card">
+                <span class="neutral-status">
+                    ⚪ NOT CONNECTED
+                </span>
+                <br><br>
+                This cloud app cannot directly access
+                Ollama running on your laptop.
+                <br><br>
+                <small>
+                    Run the app locally to use your
+                    PC's Ollama models.
+                </small>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    # --------------------------------------------------------
+    # LOCAL + OLLAMA ONLINE
+    # --------------------------------------------------------
+
+    elif local_ollama_online:
 
         st.markdown(
             """
@@ -140,8 +174,8 @@ with st.sidebar:
                 <span class="online-status">
                     🟢 ONLINE
                 </span>
-                <br>
-                Your local Ollama is running.
+                <br><br>
+                Ollama is running on this PC.
                 <br>
                 <small>
                     Local models are available.
@@ -151,6 +185,10 @@ with st.sidebar:
             unsafe_allow_html=True,
         )
 
+    # --------------------------------------------------------
+    # LOCAL + OLLAMA OFFLINE
+    # --------------------------------------------------------
+
     else:
 
         st.markdown(
@@ -159,8 +197,8 @@ with st.sidebar:
                 <span class="offline-status">
                     🔴 OFFLINE
                 </span>
-                <br>
-                Ollama is not reachable on this PC.
+                <br><br>
+                Ollama is not running on this PC.
                 <br>
                 <small>
                     Start Ollama to use local models.
@@ -172,9 +210,9 @@ with st.sidebar:
 
     st.divider()
 
-    # --------------------------------------------------------
+    # ========================================================
     # AI PROVIDER
-    # --------------------------------------------------------
+    # ========================================================
 
     st.subheader("AI Provider")
 
@@ -182,8 +220,13 @@ with st.sidebar:
         "☁️ Ollama Cloud",
     ]
 
-    # Only make Local Ollama selectable when it is online.
-    if local_ollama_online:
+    # Local Ollama is selectable only when the app
+    # is running locally AND Ollama is online.
+
+    if (
+        not running_on_cloud
+        and local_ollama_online
+    ):
         provider_options.append(
             "💻 Local Ollama"
         )
@@ -201,9 +244,9 @@ with st.sidebar:
 
     st.divider()
 
-    # --------------------------------------------------------
+    # ========================================================
     # LOAD MODELS
-    # --------------------------------------------------------
+    # ========================================================
 
     try:
 
@@ -227,9 +270,9 @@ with st.sidebar:
                 str(e)
             )
 
-    # --------------------------------------------------------
+    # ========================================================
     # MODEL SELECTOR
-    # --------------------------------------------------------
+    # ========================================================
 
     if models:
 
@@ -237,9 +280,6 @@ with st.sidebar:
             model["name"]
             for model in models
         ]
-
-        # Make sure selected model exists
-        # in the currently selected provider.
 
         if (
             st.session_state.selected_model
@@ -260,10 +300,6 @@ with st.sidebar:
         st.session_state.selected_model = (
             selected_model
         )
-
-        # ----------------------------------------------------
-        # MODEL INFORMATION
-        # ----------------------------------------------------
 
         selected_info = next(
             (
@@ -314,9 +350,9 @@ with st.sidebar:
                 "No cloud models available."
             )
 
-    # --------------------------------------------------------
+    # ========================================================
     # REFRESH
-    # --------------------------------------------------------
+    # ========================================================
 
     st.write("")
 
@@ -328,11 +364,15 @@ with st.sidebar:
 
     st.divider()
 
-    # --------------------------------------------------------
-    # CURRENT PROVIDER STATUS
-    # --------------------------------------------------------
+    # ========================================================
+    # STATUS
+    # ========================================================
 
     st.subheader("Status")
+
+    # --------------------------------------------------------
+    # CLOUD
+    # --------------------------------------------------------
 
     if mode == "cloud":
 
@@ -369,6 +409,10 @@ with st.sidebar:
             unsafe_allow_html=True,
         )
 
+    # --------------------------------------------------------
+    # LOCAL
+    # --------------------------------------------------------
+
     else:
 
         st.markdown(
@@ -404,9 +448,9 @@ with st.sidebar:
             unsafe_allow_html=True,
         )
 
-    # --------------------------------------------------------
+    # ========================================================
     # MODEL COUNT
-    # --------------------------------------------------------
+    # ========================================================
 
     st.write(
         f"**Models available:** {len(models)}"
@@ -414,9 +458,9 @@ with st.sidebar:
 
     st.divider()
 
-    # --------------------------------------------------------
+    # ========================================================
     # CLEAR CHAT
-    # --------------------------------------------------------
+    # ========================================================
 
     if st.button(
         "🗑️ Clear Conversation",
@@ -446,10 +490,22 @@ st.markdown(
 
 
 # ============================================================
+# CLOUD ENVIRONMENT NOTICE
+# ============================================================
+
+if running_on_cloud:
+
+    st.info(
+        "☁️ You are using the cloud version of the app. "
+        "Your laptop's local Ollama cannot be accessed "
+        "directly from Streamlit Cloud."
+    )
+
+# ============================================================
 # LOCAL OFFLINE NOTICE
 # ============================================================
 
-if not local_ollama_online:
+elif not local_ollama_online:
 
     st.info(
         "💻 Local Ollama is currently offline. "
@@ -553,8 +609,6 @@ if prompt:
                 )
 
                 st.markdown(answer)
-
-                # Save assistant response
 
                 st.session_state.messages.append(
                     {
