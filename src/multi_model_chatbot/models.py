@@ -60,12 +60,28 @@ def is_streamlit_cloud():
     """
     Detect whether the app is running on Streamlit Cloud.
 
+    Local development uses localhost.
+    Streamlit Cloud uses a remote streamlit.app URL.
+
     Returns:
         True  -> Running on Streamlit Cloud
         False -> Running locally
     """
 
-    return os.getenv("STREAMLIT_SHARING_MODE") == "streamlit"
+    try:
+        url = st.context.url
+
+        return not (
+            url.startswith("http://localhost")
+            or url.startswith("http://127.0.0.1")
+            or url.startswith("https://localhost")
+            or url.startswith("https://127.0.0.1")
+        )
+
+    except Exception:
+        # Safe fallback:
+        # Assume local development if context is unavailable.
+        return False
 
 
 # ============================================================
@@ -99,8 +115,8 @@ def check_local_ollama():
         None  -> Streamlit Cloud
     """
 
-    # A Streamlit Cloud server cannot access Ollama
-    # installed on the user's personal laptop.
+    # Streamlit Cloud cannot access Ollama running
+    # on the user's personal PC.
     if is_streamlit_cloud():
         return None
 
